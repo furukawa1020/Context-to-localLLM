@@ -271,11 +271,13 @@ impl StructureAnalyzer {
             (0x4E00..=0x9FFF).contains(&u) // Kanji
         });
 
+        let lower_text = text.to_lowercase();
+
         let request_summary =
-            text.contains("summarize") || text.contains("要約") || text.contains("まとめて");
+            lower_text.contains("summarize") || text.contains("要約") || text.contains("まとめて");
 
         let request_implementation =
-            text.contains("implement") || text.contains("実装") || text.contains("作って");
+            lower_text.contains("implement") || text.contains("実装") || text.contains("作って");
 
         let is_polite = text.contains("です") || text.contains("ます") || text.contains("ください");
         let is_direct = text.contains("だ")
