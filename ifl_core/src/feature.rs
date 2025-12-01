@@ -30,6 +30,7 @@ pub struct FeatureExtractor {
     paste_timestamps: Vec<u64>, // To check beginning/end
     current_selection_len: usize,
     final_pause_ms: u64,
+    events: Vec<InputEvent>,
 }
 
 impl FeatureExtractor {
@@ -52,10 +53,16 @@ impl FeatureExtractor {
             paste_timestamps: Vec::new(),
             current_selection_len: 0,
             final_pause_ms: 0,
+            events: Vec::new(),
         }
     }
 
+    pub fn get_events(&self) -> &Vec<InputEvent> {
+        &self.events
+    }
+
     pub fn process_event(&mut self, event: &InputEvent) {
+        self.events.push(event.clone());
         let ts = match event {
             InputEvent::KeyInsert { ts, .. } => *ts,
             InputEvent::KeyDelete { ts, .. } => *ts,
