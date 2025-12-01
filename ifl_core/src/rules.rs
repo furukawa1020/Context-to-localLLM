@@ -10,13 +10,7 @@ impl RuleEngine {
     pub fn apply(
         source: &SourceFeatures,
         timing: &TimingFeatures,
-use crate::profile::{
-    AnswerMode, AnswerTags, DepthHint, EditingFeatures, ScopeHint, SourceFeatures, SourceType,
-    StructureFeatures, TimingFeatures, ToneHint,
-};
-use std::collections::HashSet;
 
-pub struct RuleEngine;
 
 impl RuleEngine {
     pub fn apply(
