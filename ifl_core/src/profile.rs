@@ -74,7 +74,7 @@ pub struct AnswerTags {
     pub answer_mode: Vec<AnswerMode>,
     pub scope_hint: ScopeHint,
     pub tone_hint: ToneHint,
-    pub tone_hint: ToneHint,
+
     pub depth_hint: DepthHint,
     pub confidence: f32,
 }
