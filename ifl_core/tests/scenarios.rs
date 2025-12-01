@@ -279,3 +279,36 @@ fn test_efficiency_score() {
     println!("Efficiency: {}", profile.editing.efficiency_score);
     assert!(profile.editing.efficiency_score > 0.7 && profile.editing.efficiency_score < 0.72);
 }
+
+#[test]
+fn test_snapshot_persistence() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Snap"
+    for ch in "Snap".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    // Export snapshot
+    let snapshot_json = core.export_snapshot(&id, "Snap").unwrap();
+    println!("Snapshot: {}", snapshot_json);
+
+    let snapshot: ifl_core::profile::SessionSnapshot =
+        serde_json::from_str(&snapshot_json).unwrap();
+
+    // Verify profile
+    assert_eq!(snapshot.profile.structure.char_count, 4);
+    assert_eq!(snapshot.profile.source.source_type, SourceType::TypedOnly);
+
+    // Verify events
+    assert!(snapshot.events.len() >= 5); // 4 chars + submit
+    assert!(matches!(
+        snapshot.events[0],
+        InputEvent::KeyInsert { ch: 'S', .. }
+    ));
+}

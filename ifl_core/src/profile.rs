@@ -114,3 +114,9 @@ pub enum DepthHint {
     Normal,
     Deep,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionSnapshot {
+    pub profile: InputProfile,
+    pub events: Vec<crate::event::InputEvent>,
+}
