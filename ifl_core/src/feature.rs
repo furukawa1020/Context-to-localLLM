@@ -28,6 +28,8 @@ pub struct FeatureExtractor {
     // Internal tracking
     in_backspace_burst: bool,
     paste_timestamps: Vec<u64>, // To check beginning/end
+    current_selection_len: usize,
+    final_pause_ms: u64,
 }
 
 impl FeatureExtractor {
@@ -48,6 +50,8 @@ impl FeatureExtractor {
             selection_edit_count: 0,
             in_backspace_burst: false,
             paste_timestamps: Vec::new(),
+            current_selection_len: 0,
+            final_pause_ms: 0,
         }
     }
 
@@ -94,10 +98,13 @@ impl FeatureExtractor {
         self.last_event_time = Some(ts);
 
         // Event specific logic
-        match event {
             InputEvent::KeyInsert { .. } => {
                 self.total_typed_chars += 1;
                 self.in_backspace_burst = false;
+                if self.current_selection_len > 0 {
+                    self.selection_edit_count += 1;
+                    self.current_selection_len = 0;
+                }
             }
             InputEvent::KeyDelete { kind, count, .. } => {
                 if matches!(kind, DeleteKind::Backspace) {
@@ -111,12 +118,20 @@ impl FeatureExtractor {
                 } else {
                     self.in_backspace_burst = false;
                 }
+                if self.current_selection_len > 0 {
+                    self.selection_edit_count += 1;
+                    self.current_selection_len = 0;
+                }
             }
             InputEvent::Paste { length, .. } => {
                 self.paste_events += 1;
                 self.total_pasted_chars += *length;
                 self.paste_timestamps.push(ts);
                 self.in_backspace_burst = false;
+                if self.current_selection_len > 0 {
+                    self.selection_edit_count += 1;
+                    self.current_selection_len = 0;
+                }
             }
             InputEvent::Undo { .. } => {
                 self.undo_count += 1;
@@ -126,10 +141,14 @@ impl FeatureExtractor {
                 self.redo_count += 1;
                 self.in_backspace_burst = false;
             }
-            InputEvent::SelectionChange { .. } => {
-                // Logic for selection_edit_count would require state of previous selection
-                // Simplified: if we get a KeyInsert or Paste immediately after SelectionChange with range > 0
-                // For now, we'll leave this as a placeholder or need more complex state tracking
+            InputEvent::SelectionChange { start, end, .. } => {
+                self.current_selection_len = end.saturating_sub(*start);
+                self.in_backspace_burst = false;
+            }
+            InputEvent::Submit { .. } => {
+                if let Some(last) = self.last_event_time {
+                    self.final_pause_ms = ts.saturating_sub(last);
+                }
                 self.in_backspace_burst = false;
             }
             _ => {
@@ -173,7 +192,7 @@ impl FeatureExtractor {
             0.0
         };
 
-        let pre_submit_pause_ms = 0;
+        let pre_submit_pause_ms = self.final_pause_ms;
 
         TimingFeatures {
             total_duration_ms,
