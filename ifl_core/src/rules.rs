@@ -16,13 +16,16 @@ impl RuleEngine {
         let mut modes = HashSet::new();
         let mut scope = ScopeHint::Medium; // Default
         let mut tone = ToneHint::Neutral; // Default
+        let mut tone = ToneHint::Neutral; // Default
         let mut depth = DepthHint::Normal; // Default
+        let mut confidence = 0.5; // Base confidence
 
         // Rule 1: High paste ratio + multiple lines -> Summarize/Structure
         if source.paste_ratio > 0.8 && structure.line_count >= 3 {
             modes.insert(AnswerMode::Summarize);
             modes.insert(AnswerMode::Structure);
             scope = ScopeHint::Broad;
+            confidence += 0.2;
         }
 
         // Rule 2: Long typed session with edits -> Refine/Clarify
@@ -33,6 +36,7 @@ impl RuleEngine {
             modes.insert(AnswerMode::Refine);
             modes.insert(AnswerMode::ClarifyQuestion);
             depth = DepthHint::Deep;
+            confidence += 0.2;
         }
 
         // Rule 3: Short query -> Explore/Clarify
@@ -40,27 +44,32 @@ impl RuleEngine {
             modes.insert(AnswerMode::Explore);
             modes.insert(AnswerMode::ClarifyQuestion);
             scope = ScopeHint::Broad;
+            confidence += 0.1;
         }
 
         // Rule 4: Mixed source with selection edits -> Complete
         if matches!(source.source_type, SourceType::Mixed) && editing.selection_edit_count > 2 {
             modes.insert(AnswerMode::Complete);
+            confidence += 0.2;
         }
 
         // Rule 5: Bullet points -> Structure
         if structure.bullet_lines > 2 {
             modes.insert(AnswerMode::Structure);
             scope = ScopeHint::Narrow;
+            confidence += 0.1;
         }
 
         // Rule 6: Question like -> Clarify/Explore
         if structure.question_like {
             modes.insert(AnswerMode::ClarifyQuestion);
+            confidence += 0.1;
         }
 
         // Rule 7: Command like -> Direct tone
         if structure.command_like {
             tone = ToneHint::Direct;
+            confidence += 0.1;
         }
 
         // Rule 8: Japanese specific rules
@@ -75,17 +84,20 @@ impl RuleEngine {
             } else if structure.is_direct {
                 tone = ToneHint::Direct;
             }
+            confidence += 0.1;
         }
 
         // Rule 9: Explicit requests
         if structure.request_summary {
             modes.insert(AnswerMode::Summarize);
             scope = ScopeHint::Broad;
+            confidence += 0.3; // Explicit request is strong
         }
         if structure.request_implementation {
             modes.insert(AnswerMode::Complete);
             modes.insert(AnswerMode::Structure);
             tone = ToneHint::Direct;
+            confidence += 0.3; // Explicit request is strong
         }
 
         // Fallback if no modes
@@ -103,6 +115,7 @@ impl RuleEngine {
             scope_hint: scope,
             tone_hint: tone,
             depth_hint: depth,
+            confidence: confidence.min(1.0),
         }
     }
 }
