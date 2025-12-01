@@ -51,6 +51,7 @@ pub struct EditingFeatures {
     pub undo_count: usize,
     pub redo_count: usize,
     pub selection_edit_count: usize,
+    pub efficiency_score: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
