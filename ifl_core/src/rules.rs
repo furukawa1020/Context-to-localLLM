@@ -76,7 +76,6 @@ impl RuleEngine {
                 tone = ToneHint::Direct;
             }
         }
-        }
 
         // Rule 9: Explicit requests
         if structure.request_summary {
