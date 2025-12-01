@@ -98,6 +98,7 @@ impl FeatureExtractor {
         self.last_event_time = Some(ts);
 
         // Event specific logic
+        match event {
             InputEvent::KeyInsert { .. } => {
                 self.total_typed_chars += 1;
                 self.in_backspace_burst = false;
@@ -266,11 +267,14 @@ impl StructureAnalyzer {
         let request_summary =
             text.contains("summarize") || text.contains("要約") || text.contains("まとめて");
 
-
-        let request_implementation = text.contains("implement") || text.contains("実装") || text.contains("作って");
+        let request_implementation =
+            text.contains("implement") || text.contains("実装") || text.contains("作って");
 
         let is_polite = text.contains("です") || text.contains("ます") || text.contains("ください");
-        let is_direct = text.contains("だ") || text.contains("である") || text.contains("しろ") || text.contains("せよ");
+        let is_direct = text.contains("だ")
+            || text.contains("である")
+            || text.contains("しろ")
+            || text.contains("せよ");
 
         StructureFeatures {
             char_count,
