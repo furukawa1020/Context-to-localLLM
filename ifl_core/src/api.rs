@@ -58,6 +58,16 @@ impl IflCore {
 
             // Let's assume the last event was Submit and use its timestamp if available, otherwise 0.
             // But `FeatureExtractor` doesn't expose `last_event_time` publicly.
+
+            let source = extractor.extract_source_features(0);
+            let timing = extractor.extract_timing_features();
+            let structure = StructureAnalyzer::analyze(final_text);
+            let editing = extractor.extract_editing_features(structure.char_count);
+
+            let tags = RuleEngine::apply(&source, &timing, &editing, &structure);
+
+            let profile = InputProfile {
+                message_id: message_id.to_string(),
                 source,
                 timing,
                 editing,
