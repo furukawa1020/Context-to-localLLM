@@ -1,4 +1,4 @@
-use ifl_core::profile::{AnswerMode, SourceType};
+use ifl_core::profile::{AnswerMode, SourceType, ToneHint};
 use ifl_core::{IflCore, InputEvent};
 
 #[test]
@@ -100,4 +100,84 @@ fn test_scenario_japanese_summary() {
     assert!(profile.structure.japanese_detected);
     assert!(profile.structure.request_summary);
     assert!(profile.tags.answer_mode.contains(&AnswerMode::Summarize));
+}
+
+#[test]
+fn test_scenario_selection_replace() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Hello"
+    for ch in "Hello".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+
+    // Select "Hello" (0 to 5)
+    core.push_event(
+        &id,
+        InputEvent::SelectionChange {
+            start: 0,
+            end: 5,
+            ts,
+        },
+    )
+    .unwrap();
+    ts += 500;
+
+    // Type "Hi" (replacing selection)
+    // First char 'H' replaces selection
+    core.push_event(&id, InputEvent::KeyInsert { ch: 'H', ts })
+        .unwrap();
+    ts += 100;
+    // Second char 'i' is normal typing
+    core.push_event(&id, InputEvent::KeyInsert { ch: 'i', ts })
+        .unwrap();
+    ts += 100;
+
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    let json = core.finalize_message(&id, "Hi").unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    assert!(profile.editing.selection_edit_count >= 1);
+}
+
+#[test]
+fn test_scenario_japanese_tone() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Polite
+    let text_polite = "お願いします。";
+    for ch in text_polite.chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+    let json = core.finalize_message(&id, text_polite).unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    // ToneHint::Gentle is expected for "masu/desu/kudasai"
+    assert!(matches!(profile.tags.tone_hint, ToneHint::Gentle));
+
+    // Direct
+    let id2 = core.start_message();
+    let text_direct = "これをやれ。"; // "yare" is imperative, but let's try "da" or "dearu" if rule supports it
+                                      // My rule checks: "da", "dearu", "shiro", "seyo"
+    let text_direct_2 = "これは重要だ。";
+    for ch in text_direct_2.chars() {
+        core.push_event(&id2, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id2, InputEvent::Submit { ts }).unwrap();
+    let json2 = core.finalize_message(&id2, text_direct_2).unwrap();
+    let profile2: ifl_core::InputProfile = serde_json::from_str(&json2).unwrap();
+
+    assert!(matches!(profile2.tags.tone_hint, ToneHint::Direct));
 }
