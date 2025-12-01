@@ -10,12 +10,23 @@ impl RuleEngine {
     pub fn apply(
         source: &SourceFeatures,
         timing: &TimingFeatures,
+use crate::profile::{
+    AnswerMode, AnswerTags, DepthHint, EditingFeatures, ScopeHint, SourceFeatures, SourceType,
+    StructureFeatures, TimingFeatures, ToneHint,
+};
+use std::collections::HashSet;
+
+pub struct RuleEngine;
+
+impl RuleEngine {
+    pub fn apply(
+        source: &SourceFeatures,
+        timing: &TimingFeatures,
         editing: &EditingFeatures,
         structure: &StructureFeatures,
     ) -> AnswerTags {
         let mut modes = HashSet::new();
         let mut scope = ScopeHint::Medium; // Default
-        let mut tone = ToneHint::Neutral; // Default
         let mut tone = ToneHint::Neutral; // Default
         let mut depth = DepthHint::Normal; // Default
         let mut confidence = 0.5; // Base confidence
