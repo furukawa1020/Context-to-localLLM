@@ -58,21 +58,6 @@ impl IflCore {
 
             // Let's assume the last event was Submit and use its timestamp if available, otherwise 0.
             // But `FeatureExtractor` doesn't expose `last_event_time` publicly.
-            // I'll cheat slightly and pass 0, assuming the `Submit` event was processed and we can fix `FeatureExtractor` later if needed.
-            // Actually, `FeatureExtractor` logic uses `submit_ts` to calculate duration.
-            // Let's assume the caller passes the timestamp of submission? No, the API signature is `finalize_message(id, text)`.
-            // I'll use 0 for now and maybe update `FeatureExtractor` to store the submit timestamp if it saw a Submit event.
-
-            let source = extractor.extract_source_features(0); // Duration is calculated inside timing
-            let timing = extractor.extract_timing_features();
-
-            let editing = extractor.extract_editing_features();
-            let structure = StructureAnalyzer::analyze(final_text);
-
-            let tags = RuleEngine::apply(&source, &timing, &editing, &structure);
-
-            let profile = InputProfile {
-                message_id: message_id.to_string(),
                 source,
                 timing,
                 editing,

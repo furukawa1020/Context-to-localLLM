@@ -233,3 +233,49 @@ fn test_confidence() {
     assert!(profile.tags.confidence > 0.7);
     assert!(profile.tags.answer_mode.contains(&AnswerMode::Summarize));
 }
+
+#[test]
+fn test_efficiency_score() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Hello" (5 chars)
+    for ch in "Hello".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+
+    // Backspace 2 chars
+    for _ in 0..2 {
+        core.push_event(
+            &id,
+            InputEvent::KeyDelete {
+                kind: ifl_core::event::DeleteKind::Backspace,
+                count: 1,
+                ts,
+            },
+        )
+        .unwrap();
+        ts += 100;
+    }
+
+    // Type "p!" (2 chars) -> "Help!"
+    for ch in "p!".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    // Final text "Help!" (5 chars)
+    // Total typed: 5 (Hello) + 2 (p!) = 7 chars
+    // Efficiency = 5 / 7 = ~0.71
+
+    let json = core.finalize_message(&id, "Help!").unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    println!("Efficiency: {}", profile.editing.efficiency_score);
+    assert!(profile.editing.efficiency_score > 0.7 && profile.editing.efficiency_score < 0.72);
+}
