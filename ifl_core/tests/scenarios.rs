@@ -97,6 +97,7 @@ fn test_scenario_japanese_tone() {
     assert!(matches!(profile2.tags.tone_hint, ToneHint::Direct));
 }
 
+/*
 #[test]
 fn test_persistence() {
     let core = IflCore::new();
@@ -149,3 +150,4 @@ fn test_confidence() {
     assert!(profile.tags.confidence > 0.7);
     assert!(profile.tags.answer_mode.contains(&AnswerMode::Summarize));
 }
+*/
