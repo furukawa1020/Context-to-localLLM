@@ -181,3 +181,56 @@ fn test_scenario_japanese_tone() {
 
     assert!(matches!(profile2.tags.tone_hint, ToneHint::Direct));
 }
+
+#[test]
+fn test_persistence() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Hello"
+    for ch in "Hello".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    // Export
+    let events_json = core.export_events(&id).unwrap();
+    println!("Exported events: {}", events_json);
+
+    // Import into new core
+    let core2 = IflCore::new();
+    let id2 = core2.import_events(&events_json).unwrap();
+
+    // Finalize imported session
+    let json = core2.finalize_message(&id2, "Hello").unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    assert_eq!(profile.source.source_type, SourceType::TypedOnly);
+    assert_eq!(profile.structure.char_count, 5);
+}
+
+#[test]
+fn test_confidence() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Explicit request "Summarize this"
+    let text = "Summarize this article.";
+    for ch in text.chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    let json = core.finalize_message(&id, text).unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    // Should have high confidence due to explicit request
+    assert!(profile.tags.confidence > 0.7);
+    assert!(profile.tags.answer_mode.contains(&AnswerMode::Summarize));
+}
