@@ -62,6 +62,9 @@ pub struct StructureFeatures {
     pub has_code_block: bool,
     pub question_like: bool,
     pub command_like: bool,
+    pub japanese_detected: bool,
+    pub request_summary: bool,
+    pub request_implementation: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
