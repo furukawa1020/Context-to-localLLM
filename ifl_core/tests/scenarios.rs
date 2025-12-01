@@ -116,15 +116,11 @@ fn test_scenario_selection_replace() {
     }
 
     // Select "Hello" (0 to 5)
-    core.push_event(
-        &id,
-        InputEvent::SelectionChange {
-            start: 0,
-            end: 5,
-            ts,
-        },
-    )
-    .unwrap();
+    core.push_event(&id, InputEvent::SelectionChange {
+        start: 0,
+        end: 5,
+        ts,
+    }).unwrap();
     ts += 500;
 
     // Type "Hi" (replacing selection)
@@ -311,15 +307,11 @@ fn test_scenario_selection_replace() {
     }
 
     // Select "Hello" (0 to 5)
-    core.push_event(
-        &id,
-        InputEvent::SelectionChange {
-            start: 0,
-            end: 5,
-            ts,
-        },
-    )
-    .unwrap();
+    core.push_event(&id, InputEvent::SelectionChange {
+        start: 0,
+        end: 5,
+        ts,
+    }).unwrap();
     ts += 500;
 
     // Type "Hi" (replacing selection)
