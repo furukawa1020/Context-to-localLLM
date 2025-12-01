@@ -65,6 +65,8 @@ pub struct StructureFeatures {
     pub japanese_detected: bool,
     pub request_summary: bool,
     pub request_implementation: bool,
+    pub is_polite: bool,
+    pub is_direct: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

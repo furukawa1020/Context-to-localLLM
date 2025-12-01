@@ -70,14 +70,11 @@ impl RuleEngine {
                 depth = DepthHint::Deep;
             }
             // Japanese Tone Detection
-            // Simple heuristic: if "desu/masu" is detected, it's gentle/polite.
-            // If "da/dearu" is detected, it's direct.
-            // We need to check the text content, but RuleEngine only sees features.
-            // We should add tone flags to StructureFeatures in feature.rs first.
-            // But since I missed adding tone flags to StructureFeatures in the previous step,
-            // I will assume we can infer it or I need to update feature.rs again.
-            // Actually, let's update feature.rs to include `is_polite` and `is_direct` first.
-            // For now, I'll skip this specific rule until I update feature.rs.
+            if structure.is_polite {
+                tone = ToneHint::Gentle;
+            } else if structure.is_direct {
+                tone = ToneHint::Direct;
+            }
         }
         }
 

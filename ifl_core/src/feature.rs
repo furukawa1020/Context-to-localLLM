@@ -265,8 +265,12 @@ impl StructureAnalyzer {
 
         let request_summary =
             text.contains("summarize") || text.contains("要約") || text.contains("まとめて");
-        let request_implementation =
-            text.contains("implement") || text.contains("実装") || text.contains("作って");
+
+
+        let request_implementation = text.contains("implement") || text.contains("実装") || text.contains("作って");
+
+        let is_polite = text.contains("です") || text.contains("ます") || text.contains("ください");
+        let is_direct = text.contains("だ") || text.contains("である") || text.contains("しろ") || text.contains("せよ");
 
         StructureFeatures {
             char_count,
@@ -279,6 +283,8 @@ impl StructureAnalyzer {
             japanese_detected,
             request_summary,
             request_implementation,
+            is_polite,
+            is_direct,
         }
     }
 }
