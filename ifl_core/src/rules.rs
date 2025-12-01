@@ -63,6 +63,25 @@ impl RuleEngine {
             tone = ToneHint::Direct;
         }
 
+        // Rule 8: Japanese specific rules
+        if structure.japanese_detected {
+            // Japanese text tends to be denser, so "Short" threshold might be lower
+            if structure.char_count > 500 {
+                depth = DepthHint::Deep;
+            }
+        }
+
+        // Rule 9: Explicit requests
+        if structure.request_summary {
+            modes.insert(AnswerMode::Summarize);
+            scope = ScopeHint::Broad;
+        }
+        if structure.request_implementation {
+            modes.insert(AnswerMode::Complete);
+            modes.insert(AnswerMode::Structure);
+            tone = ToneHint::Direct;
+        }
+
         // Fallback if no modes
         if modes.is_empty() {
             modes.insert(AnswerMode::Explore);
