@@ -490,8 +490,9 @@ fn test_snapshot_persistence() {
     core.push_event(&id, InputEvent::Submit { ts }).unwrap();
 
     // Export snapshot
+    println!("Exporting snapshot...");
     let snapshot_json = core.export_snapshot(&id, "Snap").unwrap();
-    println!("Snapshot: {}", snapshot_json);
+    println!("Snapshot JSON len: {}", snapshot_json.len());
 
     let snapshot: ifl_core::profile::SessionSnapshot =
         serde_json::from_str(&snapshot_json).unwrap();
