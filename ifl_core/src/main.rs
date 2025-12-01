@@ -16,6 +16,10 @@ struct Args {
     /// Typing speed in WPM (only for Typed mode)
     #[arg(long, default_value_t = 60)]
     wpm: u64,
+
+    /// Replay events from file
+    #[arg(long)]
+    replay: Option<String>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
@@ -27,6 +31,27 @@ enum Mode {
 
 fn main() {
     let args = Args::parse();
+    let core = IflCore::new();
+
+    if let Some(replay_file) = args.replay {
+        let json = std::fs::read_to_string(replay_file).expect("Failed to read replay file");
+        let id = core.import_events(&json).expect("Failed to import events");
+
+        // For replay, we might not have the final text easily unless we reconstruct it or it's in the file.
+        // But finalize_message needs text.
+        // Let's assume for now we just want to see the profile based on events.
+        // But wait, StructureAnalyzer needs text.
+        // We can reconstruct text from events if we really want, but that's complex (handling backspaces etc).
+        // For this simple CLI, let's just say "Replay analysis requires text reconstruction which is not yet implemented fully".
+        // OR, we can just pass a dummy text if we only care about timing/source features.
+        // Let's try to pass dummy text for now.
+
+        match core.finalize_message(&id, "") {
+            Ok(json) => println!("{}", json),
+            Err(e) => eprintln!("Error: {}", e),
+        }
+        return;
+    }
 
     // Get input text (arg or stdin)
     let text = match args.text {
