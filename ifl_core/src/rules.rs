@@ -17,7 +17,7 @@ impl RuleEngine {
         let mut scope = ScopeHint::Medium; // Default
         let mut tone = ToneHint::Neutral; // Default
         let mut depth = DepthHint::Normal; // Default
-        let mut confidence = 0.5; // Base confidence
+        let mut confidence = 0.5f32; // Base confidence
 
         // Rule 1: High paste ratio + multiple lines -> Summarize/Structure
         if source.paste_ratio > 0.8 && structure.line_count >= 3 {
