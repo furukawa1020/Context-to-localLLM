@@ -211,13 +211,24 @@ impl FeatureExtractor {
         }
     }
 
-    pub fn extract_editing_features(&self) -> EditingFeatures {
+    pub fn extract_editing_features(&self, final_char_count: usize) -> EditingFeatures {
+        let efficiency_score = if self.total_typed_chars > 0 {
+            final_char_count as f32 / self.total_typed_chars as f32
+        } else if final_char_count > 0 {
+            1.0 // Pasted content is considered 100% efficient in terms of typing? Or maybe undefined.
+                // If typed=0 and final>0, it's likely paste.
+                // Let's cap at 1.0 or set to 1.0 if purely pasted.
+        } else {
+            0.0 // Empty
+        };
+
         EditingFeatures {
             backspace_count: self.backspace_count,
             backspace_burst_count: self.backspace_burst_count,
             undo_count: self.undo_count,
             redo_count: self.redo_count,
             selection_edit_count: self.selection_edit_count,
+            efficiency_score,
         }
     }
 }
