@@ -10,12 +10,6 @@ impl RuleEngine {
     pub fn apply(
         source: &SourceFeatures,
         timing: &TimingFeatures,
-
-
-impl RuleEngine {
-    pub fn apply(
-        source: &SourceFeatures,
-        timing: &TimingFeatures,
         editing: &EditingFeatures,
         structure: &StructureFeatures,
     ) -> AnswerTags {
