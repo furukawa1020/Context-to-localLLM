@@ -1,0 +1,58 @@
+   Compiling ifl_core v0.1.0 (C:\Users\wakuw\OneDrive\画像\デスクトップ\.vscode\covtecar to localLLM\ifl_core)
+error[E0428]: the name `test_scenario_japanese_tone` is defined multiple times
+   --> tests\scenarios.rs:344:1
+    |
+149 | fn test_scenario_japanese_tone() {
+    | -------------------------------- previous definition of the value `test_scenario_japanese_tone` here
+...
+344 | fn test_scenario_japanese_tone() {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `test_scenario_japanese_tone` redefined here
+    |
+    = note: `test_scenario_japanese_tone` must be defined only once in the value namespace of this module
+
+error[E0428]: the name `test_persistence` is defined multiple times
+   --> tests\scenarios.rs:380:1
+    |
+185 | fn test_persistence() {
+    | --------------------- previous definition of the value `test_persistence` here
+...
+380 | fn test_persistence() {
+    | ^^^^^^^^^^^^^^^^^^^^^ `test_persistence` redefined here
+    |
+    = note: `test_persistence` must be defined only once in the value namespace of this module
+
+error[E0428]: the name `test_confidence` is defined multiple times
+   --> tests\scenarios.rs:410:1
+    |
+215 | fn test_confidence() {
+    | -------------------- previous definition of the value `test_confidence` here
+...
+410 | fn test_confidence() {
+    | ^^^^^^^^^^^^^^^^^^^^ `test_confidence` redefined here
+    |
+    = note: `test_confidence` must be defined only once in the value namespace of this module
+
+error[E0428]: the name `test_efficiency_score` is defined multiple times
+   --> tests\scenarios.rs:433:1
+    |
+238 | fn test_efficiency_score() {
+    | -------------------------- previous definition of the value `test_efficiency_score` here
+...
+433 | fn test_efficiency_score() {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `test_efficiency_score` redefined here
+    |
+    = note: `test_efficiency_score` must be defined only once in the value namespace of this module
+
+error[E0428]: the name `test_snapshot_persistence` is defined multiple times
+   --> tests\scenarios.rs:479:1
+    |
+284 | fn test_snapshot_persistence() {
+    | ------------------------------ previous definition of the value `test_snapshot_persistence` here
+...
+479 | fn test_snapshot_persistence() {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `test_snapshot_persistence` redefined here
+    |
+    = note: `test_snapshot_persistence` must be defined only once in the value namespace of this module
+
+For more information about this error, try `rustc --explain E0428`.
+error: could not compile `ifl_core` (test "scenarios") due to 5 previous errors
