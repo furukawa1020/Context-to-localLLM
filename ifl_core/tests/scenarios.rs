@@ -665,12 +665,10 @@ fn test_efficiency_score() {
 
     let json = core.finalize_message(&id, "Help!").unwrap();
     let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
-
     println!("Efficiency: {}", profile.editing.efficiency_score);
     assert!(profile.editing.efficiency_score > 0.7 && profile.editing.efficiency_score < 0.72);
 }
 
-/*
 #[test]
 fn test_snapshot_persistence() {
     let core = IflCore::new();
@@ -712,4 +710,138 @@ fn test_snapshot_persistence() {
         InputEvent::KeyInsert { ch: 'S', .. }
     ));
 }
-*/
+
+#[test]
+fn test_scenario_japanese_tone() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Polite
+    let text_polite = "お願いします。";
+    for ch in text_polite.chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+    let json = core.finalize_message(&id, text_polite).unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    // ToneHint::Gentle is expected for "masu/desu/kudasai"
+    assert!(matches!(profile.tags.tone_hint, ToneHint::Gentle));
+
+    // Direct
+    let id2 = core.start_message();
+    let text_direct = "これをやれ。";
+    let text_direct_2 = "これは重要だ。";
+    for ch in text_direct_2.chars() {
+        core.push_event(&id2, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id2, InputEvent::Submit { ts }).unwrap();
+    let json2 = core.finalize_message(&id2, text_direct_2).unwrap();
+    let profile2: ifl_core::InputProfile = serde_json::from_str(&json2).unwrap();
+
+    assert!(matches!(profile2.tags.tone_hint, ToneHint::Direct));
+}
+
+#[test]
+fn test_persistence() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Hello"
+    for ch in "Hello".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    // Export
+    let events_json = core.export_events(&id).unwrap();
+    println!("Exported events: {}", events_json);
+
+    // Import into new core
+    let core2 = IflCore::new();
+    let id2 = core2.import_events(&events_json).unwrap();
+
+    // Finalize imported session
+    let json = core2.finalize_message(&id2, "Hello").unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    assert_eq!(profile.source.source_type, SourceType::TypedOnly);
+    assert_eq!(profile.structure.char_count, 5);
+}
+
+#[test]
+fn test_confidence() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Explicit request "Summarize this"
+    let text = "Summarize this article.";
+    for ch in text.chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    let json = core.finalize_message(&id, text).unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    // Should have high confidence due to explicit request
+    assert!(profile.tags.confidence > 0.7);
+    assert!(profile.tags.answer_mode.contains(&AnswerMode::Summarize));
+}
+
+#[test]
+fn test_efficiency_score() {
+    let core = IflCore::new();
+    let id = core.start_message();
+    let mut ts = 1000;
+
+    // Type "Hello" (5 chars)
+    for ch in "Hello".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+
+    // Backspace 2 chars
+    for _ in 0..2 {
+        core.push_event(
+            &id,
+            InputEvent::KeyDelete {
+                kind: ifl_core::event::DeleteKind::Backspace,
+                count: 1,
+                ts,
+            },
+        )
+        .unwrap();
+        ts += 100;
+    }
+
+    // Type "p!" (2 chars) -> "Help!"
+    for ch in "p!".chars() {
+        core.push_event(&id, InputEvent::KeyInsert { ch, ts })
+            .unwrap();
+        ts += 100;
+    }
+    core.push_event(&id, InputEvent::Submit { ts }).unwrap();
+
+    // Final text "Help!" (5 chars)
+    // Total typed: 5 (Hello) + 2 (p!) = 7 chars
+    // Efficiency = 5 / 7 = ~0.71
+
+    let json = core.finalize_message(&id, "Help!").unwrap();
+    let profile: ifl_core::InputProfile = serde_json::from_str(&json).unwrap();
+
+    println!("Efficiency: {}", profile.editing.efficiency_score);
+    assert!(profile.editing.efficiency_score > 0.7 && profile.editing.efficiency_score < 0.72);
+}
