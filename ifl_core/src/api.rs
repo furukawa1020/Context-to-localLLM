@@ -105,39 +105,17 @@ impl IflCore {
     }
 
     pub fn export_snapshot(&self, id: &str, final_text: &str) -> Result<String, String> {
-        // 1. Finalize message to get profile (removes session)
-        let profile_json = self.finalize_message(id, final_text)?;
-        let profile: InputProfile =
-            serde_json::from_str(&profile_json).map_err(|e| e.to_string())?;
-
-        // 2. We need events. But finalize_message removed the session!
-        // We should change finalize_message to NOT remove the session, or retrieve events first.
-        // But finalize_message consumes the session in current logic (removes it).
-        // Let's modify logic:
-        // We can't easily get events AFTER finalize_message if it removes the session.
-        // We should retrieve events first, then finalize.
-        // But `finalize_message` takes `&self` and locks.
-
-        // Refactored approach:
-        // We'll reimplement the logic here manually to avoid fighting with `finalize_message`'s ownership/removal.
-        // Or better: modify `finalize_message` to optionally keep session? No, that complicates API.
-        // Let's just peek at the session to get events, then call finalize.
-        // Wait, `finalize_message` removes it. So we must get events BEFORE calling it.
-
-        // But `export_events` also locks.
-        // If we call `export_events` then `finalize_message`, it's fine because they are separate locks.
-
-        // Step 1: Get events (clone them)
+        // 1. Get events (clone them)
         let events_json = self.export_events(id)?;
         let events: Vec<InputEvent> =
             serde_json::from_str(&events_json).map_err(|e| e.to_string())?;
 
-        // Step 2: Finalize to get profile
+        // 2. Finalize to get profile
         let profile_json = self.finalize_message(id, final_text)?;
         let profile: InputProfile =
             serde_json::from_str(&profile_json).map_err(|e| e.to_string())?;
 
-        // Step 3: Combine
+        // 3. Combine
         let snapshot = crate::profile::SessionSnapshot { profile, events };
 
         serde_json::to_string_pretty(&snapshot).map_err(|e| e.to_string())
