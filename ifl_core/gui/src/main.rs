@@ -189,7 +189,10 @@ fn InputArea(
     on_submit: EventHandler<String>,
     on_input: EventHandler<String>,
 ) -> Element {
-    let submit = move |_| on_submit.call(text.read().clone());
+    let submit = move |_| {
+        let val = text.read().clone();
+        on_submit.call(val);
+    };
 
     rsx! {
         div { class: "p-4 bg-gray-800 border-t border-gray-700",
@@ -200,7 +203,8 @@ fn InputArea(
                     oninput: move |evt| on_input.call(evt.value()),
                     onkeydown: move |evt| {
                         if evt.key() == Key::Enter && !evt.modifiers().contains(Modifiers::SHIFT) {
-                            on_submit.call(text.read().clone());
+                            let val = text.read().clone();
+                            on_submit.call(val);
                         }
                     }
                 }

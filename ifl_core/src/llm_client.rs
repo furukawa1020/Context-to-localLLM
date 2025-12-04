@@ -15,7 +15,7 @@ impl LlmClient {
             client: Client::new(),
             base_url: base_url
                 .unwrap_or_else(|| "http://localhost:11434/v1/chat/completions".to_string()),
-            model: model.unwrap_or_else(|| "llama3".to_string()), // Default to llama3, user can change
+            model: model.unwrap_or_else(|| "llama3.2:3b".to_string()), // Default to llama3.2:3b
         }
     }
 
@@ -25,6 +25,10 @@ impl LlmClient {
         analysis: &AnswerTags,
     ) -> Result<String, Box<dyn Error>> {
         let system_prompt = self.build_system_prompt(analysis);
+        println!(
+            "--- Generated System Prompt ---\n{}\n-------------------------------",
+            system_prompt
+        );
 
         let body = json!({
             "model": self.model,
