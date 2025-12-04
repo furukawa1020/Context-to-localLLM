@@ -83,9 +83,11 @@ fn App() -> Element {
     let handle_input = move |val: String| {
         text.set(val.clone());
         if let Some(ch) = val.chars().last() {
-            core.read()
-                .push_event(&session_id.read(), InputEvent::KeyInsert { ch, ts: 0 })
-                .unwrap();
+            let core_ref = core.read();
+            let id = session_id.read();
+            if let Err(e) = core_ref.push_event(&id, InputEvent::KeyInsert { ch, ts: 0 }) {
+                println!("Input Error (ignored): {}", e);
+            }
         }
     };
 

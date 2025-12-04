@@ -18,15 +18,21 @@ impl IflCore {
         }
     }
 
-    pub fn start_message(&self) -> String {
+    pub fn start_message(&self) -> Result<String, String> {
         let id = Uuid::new_v4().to_string();
         let extractor = FeatureExtractor::new();
-        self.sessions.lock().unwrap().insert(id.clone(), extractor);
-        id
+        self.sessions
+            .lock()
+            .map_err(|_| "Mutex poisoned".to_string())?
+            .insert(id.clone(), extractor);
+        Ok(id)
     }
 
     pub fn push_event(&self, message_id: &str, event: InputEvent) -> Result<(), String> {
-        let mut sessions = self.sessions.lock().unwrap();
+        let mut sessions = self
+            .sessions
+            .lock()
+            .map_err(|_| "Mutex poisoned".to_string())?;
         if let Some(extractor) = sessions.get_mut(message_id) {
             extractor.process_event(&event);
             Ok(())
@@ -36,7 +42,10 @@ impl IflCore {
     }
 
     pub fn finalize_message(&self, message_id: &str, final_text: &str) -> Result<String, String> {
-        let mut sessions = self.sessions.lock().unwrap();
+        let mut sessions = self
+            .sessions
+            .lock()
+            .map_err(|_| "Mutex poisoned".to_string())?;
         if let Some(extractor) = sessions.remove(message_id) {
             // 1. Extract features
             // We need a submit timestamp. Ideally it comes from the last event or current time.
@@ -82,7 +91,10 @@ impl IflCore {
     }
 
     pub fn export_events(&self, id: &str) -> Result<String, String> {
-        let sessions = self.sessions.lock().unwrap();
+        let sessions = self
+            .sessions
+            .lock()
+            .map_err(|_| "Mutex poisoned".to_string())?;
         let extractor = sessions
             .get(id)
             .ok_or_else(|| format!("Message ID {} not found", id))?;
