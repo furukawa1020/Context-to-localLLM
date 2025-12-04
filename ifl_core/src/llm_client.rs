@@ -25,10 +25,6 @@ impl LlmClient {
         analysis: &AnswerTags,
     ) -> Result<String, Box<dyn Error>> {
         let system_prompt = self.build_system_prompt(analysis);
-        println!(
-            "--- Generated System Prompt ---\n{}\n-------------------------------",
-            system_prompt
-        );
 
         let body = json!({
             "model": self.model,
