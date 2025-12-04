@@ -70,7 +70,7 @@ pub struct StructureFeatures {
     pub is_direct: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AnswerTags {
     pub answer_mode: Vec<AnswerMode>,
     pub scope_hint: ScopeHint,
@@ -91,7 +91,7 @@ pub enum AnswerMode {
     ClarifyQuestion,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum ScopeHint {
     Narrow,
@@ -99,7 +99,7 @@ pub enum ScopeHint {
     Broad,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum ToneHint {
     Direct,
@@ -107,7 +107,7 @@ pub enum ToneHint {
     Neutral,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DepthHint {
     Shallow,
