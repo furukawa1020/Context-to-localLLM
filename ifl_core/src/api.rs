@@ -108,7 +108,7 @@ impl IflCore {
     pub fn import_events(&self, json: &str) -> Result<String, String> {
         let events: Vec<InputEvent> = serde_json::from_str(json).map_err(|e| e.to_string())?;
 
-        let id = self.start_message();
+        let id = self.start_message()?;
         for event in events {
             self.push_event(&id, event)?;
         }

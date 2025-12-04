@@ -13,7 +13,11 @@ fn main() {
 fn App() -> Element {
     // Global State
     let mut core = use_signal(|| IflCore::new());
-    let mut session_id = use_signal(|| core.read().start_message());
+    let mut session_id = use_signal(|| {
+        core.read()
+            .start_message()
+            .unwrap_or_else(|_| "init_failed".to_string())
+    });
     let mut text = use_signal(|| String::new());
     let mut messages = use_signal(|| Vec::<(String, bool)>::new());
     let mut analysis = use_signal(|| None::<AnswerTags>);
@@ -77,7 +81,11 @@ fn App() -> Element {
 
         // Reset
         text.set(String::new());
-        session_id.set(core.read().start_message());
+        if let Ok(new_id) = core.read().start_message() {
+            session_id.set(new_id);
+        } else {
+            println!("Failed to start new session: Mutex poisoned");
+        }
     };
 
     let handle_input = move |val: String| {
