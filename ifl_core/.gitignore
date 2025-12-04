@@ -3,3 +3,7 @@
 Cargo.lock
 Makefile
 makefile
+*.txt
+.vscode/
+.idea/
+gui/target/
