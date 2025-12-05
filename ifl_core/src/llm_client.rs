@@ -67,9 +67,20 @@ impl LlmClient {
         prompt.push_str(&format!("- Confidence: {:.2}\n\n", analysis.confidence));
 
         prompt.push_str("Guidelines:\n");
+        prompt.push_str("CRITICAL: You MUST adapt your persona based on the 'User State' above.\n");
+        prompt.push_str("- If 'Hesitant': Be encouraging, patient, and ask clarifying questions. Acknowledge their hesitation (e.g., 'Take your time', 'I see you're thinking carefully').\n");
+        prompt.push_str(
+            "- If 'Flowing': Be brief, efficient, and match their speed. Skip pleasantries.\n",
+        );
+        prompt.push_str("- If 'Editing': Focus on precision and detail. They are refining their thought, so you should be precise.\n");
+        prompt.push_str("- If 'Scattered': Help organize their thoughts. Offer structure.\n");
+        prompt.push_str(
+            "- If 'Pasting': Assume they want code analysis or summarization. Be analytical.\n",
+        );
 
         // Add mode instructions
         if !analysis.answer_mode.is_empty() {
+            prompt.push_str("\nSpecific Goals:\n");
             for mode in &analysis.answer_mode {
                 match mode {
                     AnswerMode::Summarize => prompt.push_str("- Summarize the input text.\n"),

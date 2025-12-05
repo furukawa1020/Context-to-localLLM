@@ -172,44 +172,90 @@ fn Sidebar(analysis: Signal<Option<ifl_core::profile::InputProfile>>) -> Element
     });
 
     rsx! {
-        div { class: "w-1/3 p-4 bg-gray-800 border-r border-gray-700 flex flex-col gap-4 overflow-y-auto",
-            h2 { class: "text-xl font-bold mb-4 text-blue-400", "IFL Real-time Analysis" }
-            if let Some(profile) = analysis.read().as_ref() {
-                AnalysisDetails { tags: profile.tags.clone() }
+        div { class: "w-1/3 p-4 bg-gray-900 border-r border-blue-900 flex flex-col gap-4 overflow-y-auto font-mono",
+            // Header
+            div { class: "flex items-center gap-2 mb-2",
+                div { class: "w-3 h-3 bg-blue-500 rounded-full animate-pulse" }
+                h2 { class: "text-xl font-bold text-blue-400 tracking-widest", "IFL CORE" }
+            }
 
-                // Typing Analysis Section
-                div { class: "p-4 bg-gray-700 rounded-lg mt-4",
-                    h3 { class: "text-sm text-gray-400 uppercase mb-2", "Typing Metadata" }
-                    div { class: "grid grid-cols-2 gap-2 text-sm",
-                        div { class: "text-gray-400", "Speed:" }
-                        div { "{profile.timing.avg_chars_per_sec:.1} cps" }
-                        div { class: "text-gray-400", "Bursts:" }
-                        div { "{profile.timing.typing_bursts}" }
-                        div { class: "text-gray-400", "Backspaces:" }
-                        div { "{profile.editing.backspace_count}" }
-                        div { class: "text-gray-400", "Paste Ratio:" }
-                        div { "{profile.source.paste_ratio:.2}" }
+            if let Some(profile) = analysis.read().as_ref() {
+                // Status Badge
+                div { class: "p-4 bg-gray-800/50 border border-blue-500/30 rounded-lg relative overflow-hidden",
+                    div { class: "absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400" }
+                    h3 { class: "text-xs text-blue-300 uppercase mb-2 tracking-wider", "User State" }
+                    div { class: "flex flex-wrap gap-2",
+                        for state in &profile.tags.user_state {
+                            div { class: "px-3 py-1 bg-blue-500/20 border border-blue-400 text-blue-200 rounded text-sm font-bold shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse",
+                                "{state:?}"
+                            }
+                        }
+                        if profile.tags.user_state.is_empty() {
+                            div { class: "text-gray-500 text-sm", "Analyzing..." }
+                        }
                     }
                 }
 
-                div { class: "p-4 bg-gray-700 rounded-lg mt-4",
-                    h3 { class: "text-sm text-gray-400 uppercase mb-2", "System Prompt Preview" }
-                    div { class: "text-xs font-mono bg-gray-900 p-2 rounded text-green-400 whitespace-pre-wrap",
+                // Metrics HUD
+                div { class: "grid grid-cols-2 gap-3",
+                    MetricCard { label: "SPEED", value: format!("{:.1}", profile.timing.avg_chars_per_sec), unit: "CPS", color: "text-cyan-400" }
+                    MetricCard { label: "CONFIDENCE", value: format!("{:.0}%", profile.tags.confidence * 100.0), unit: "", color: "text-green-400" }
+                    MetricCard { label: "BURSTS", value: format!("{}", profile.timing.typing_bursts), unit: "", color: "text-yellow-400" }
+                    MetricCard { label: "EDITS", value: format!("{}", profile.editing.backspace_count), unit: "", color: "text-red-400" }
+                }
+
+                // Intent Analysis
+                div { class: "p-4 bg-gray-800/50 border border-purple-500/30 rounded-lg",
+                    h3 { class: "text-xs text-purple-300 uppercase mb-2 tracking-wider", "Detected Intent" }
+                    div { class: "flex flex-wrap gap-2 mb-2",
+                        for mode in &profile.tags.answer_mode {
+                            span { class: "px-2 py-0.5 bg-purple-500/20 text-purple-200 text-xs rounded border border-purple-500/30", "{mode:?}" }
+                        }
+                    }
+                    div { class: "flex justify-between text-xs text-gray-400",
+                        span { "Tone: {profile.tags.tone_hint:?}" }
+                        span { "Depth: {profile.tags.depth_hint:?}" }
+                    }
+                }
+
+                // System Prompt Preview (Terminal Style)
+                div { class: "p-4 bg-black border border-green-500/30 rounded-lg font-mono text-xs relative",
+                    div { class: "absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-ping" }
+                    h3 { class: "text-green-600 uppercase mb-2 tracking-wider border-b border-green-900 pb-1", "System Prompt" }
+                    div { class: "text-green-400 whitespace-pre-wrap opacity-80 h-32 overflow-y-auto custom-scrollbar",
                         "{system_prompt}"
                     }
                 }
 
-                div { class: "p-4 bg-gray-700 rounded-lg mt-4",
-                    h3 { class: "text-sm text-gray-400 uppercase mb-2", "Raw Data" }
-                    details {
-                        summary { class: "cursor-pointer text-xs text-blue-300 hover:text-blue-200", "Show Full JSON" }
-                        div { class: "text-xs font-mono bg-gray-900 p-2 rounded text-yellow-400 whitespace-pre-wrap mt-2 overflow-x-auto",
-                            "{serde_json::to_string_pretty(profile).unwrap_or_default()}"
-                        }
+                // Raw Data Toggle
+                details { class: "group",
+                    summary { class: "cursor-pointer text-xs text-gray-500 hover:text-blue-300 transition-colors list-none flex items-center gap-2",
+                        span { class: "w-1 h-1 bg-gray-500 rounded-full group-open:bg-blue-400" }
+                        "RAW DATA STREAM"
+                    }
+                    div { class: "mt-2 text-[10px] font-mono bg-black/50 p-2 rounded text-gray-400 whitespace-pre-wrap overflow-x-auto border border-gray-800",
+                        "{serde_json::to_string_pretty(profile).unwrap_or_default()}"
                     }
                 }
+
             } else {
-                div { class: "text-gray-500 italic", "Start typing to see analysis..." }
+                div { class: "flex flex-col items-center justify-center h-64 text-gray-600 gap-4",
+                    div { class: "w-16 h-16 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin" }
+                    div { "AWAITING INPUT SIGNAL..." }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn MetricCard(label: String, value: String, unit: String, color: String) -> Element {
+    rsx! {
+        div { class: "bg-gray-800/50 p-3 rounded border border-gray-700 flex flex-col items-center justify-center",
+            div { class: "text-[10px] text-gray-500 uppercase tracking-widest mb-1", "{label}" }
+            div { class: "text-2xl font-bold {color} font-mono", "{value}" }
+            if !unit.is_empty() {
+                div { class: "text-[10px] text-gray-600", "{unit}" }
             }
         }
     }
