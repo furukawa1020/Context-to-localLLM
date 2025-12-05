@@ -1,0 +1,156 @@
+﻿cargo : warning: unne
+cessary parentheses a
+round block return va
+lue
+発生場所 行:1 文字:55
++ ... O_TARGET_DIR = 
+"$env:TEMP\cargo_targ
+et_ifl"; cargo check 
+2>&1 | Out-F ...
++                    
+                     
+         ~~~~~~~~~~~~
+~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (warning   
+ : unnece...ck re    
+turn value:Strin    g
+) [], RemoteExc    ep
+tion
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+   --> C:\Users\wakuw
+\OneDrive\逕ｻ蜒十繝・せ繧ｯ繝医
+ャ繝予.vscode\covtecar t
+o localLLM\ifl_core\s
+rc\feature.rs:199:13
+    |
+199 | ...   (self.tot
+al_typed_chars as f32
+ / (total_duration_ms
+ as f32 / 1000.0))
+    |       ^        
+                     
+                     
+                 ^
+    |
+    = note: `#[warn(u
+nused_parens)]` on by
+ default
+help: remove these pa
+rentheses
+    |
+199 -             (se
+lf.total_typed_chars 
+as f32 / (total_durat
+ion_ms as f32 / 1000.
+0))
+199 +             sel
+f.total_typed_chars a
+s f32 / (total_durati
+on_ms as f32 / 1000.0
+)
+    |
+
+warning: `ifl_core` (
+lib) generated 1 warn
+ing (run `cargo fix -
+-lib -p ifl_core` to 
+apply 1 suggestion)
+    Checking ifl_gui 
+v0.1.0 (C:\Users\waku
+w\OneDrive\逕ｻ蜒十繝・せ繧ｯ繝
+医ャ繝予.vscode\covtecar 
+to localLLM\ifl_core\
+gui)
+warning: unused impor
+ts: `InputProfile` an
+d `ToneHint`
+ --> src\main.rs:6:27
+  |
+6 |     profile::{Ans
+werTags, InputProfile
+, ToneHint},
+  |                  
+         ^^^^^^^^^^^^
+  ^^^^^^^^
+  |
+  = note: `#[warn(unu
+sed_imports)]` on by 
+default
+
+error[E0596]: cannot 
+borrow `submit_messag
+e` as mutable, as it 
+is not declared as mu
+table
+   --> src\main.rs:18
+0:21
+    |
+180 |                
+     submit_message(i
+nput_text, model_name
+.read().clone())
+    |                
+     ^^^^^^^^^^^^^^ c
+annot borrow as mutab
+le
+    |
+help: consider changi
+ng this to be mutable
+    |
+27  |     let mut sub
+mit_message = move |i
+nput_text: String, mo
+del_name: String| {
+    |         +++
+
+warning: variable doe
+s not need to be muta
+ble
+  --> src\main.rs:16:
+9
+   |
+16 |     let mut core
+ = use_signal(|| IflC
+ore::new());
+   |         ----^^^^
+   |         |
+   |         help: re
+move this `mut`
+   |
+   = note: `#[warn(un
+used_mut)]` on by def
+ault
+
+warning: variable doe
+s not need to be muta
+ble
+   --> src\main.rs:16
+8:9
+    |
+168 |     let mut mod
+el_name = use_signal(
+|| "llama3.2:3b".to_s
+tring());
+    |         ----^^^
+^^^^^^^
+    |         |
+    |         help: r
+emove this `mut`
+
+For more information 
+about this error, try
+ `rustc --explain E05
+96`.
+warning: `ifl_gui` (b
+in "ifl_gui") generat
+ed 3 warnings
+error: could not comp
+ile `ifl_gui` (bin "i
+fl_gui") due to 1 pre
+vious error; 3 warnin
+gs emitted

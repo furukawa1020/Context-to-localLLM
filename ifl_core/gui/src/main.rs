@@ -2,10 +2,7 @@
 use chrono::Utc;
 use dioxus::prelude::*;
 use ifl_core::llm_client::LlmClient;
-use ifl_core::{
-    profile::{AnswerTags, InputProfile, ToneHint},
-    DeleteKind, IflCore, InputEvent,
-};
+use ifl_core::{profile::AnswerTags, DeleteKind, IflCore, InputEvent};
 
 fn main() {
     launch(App);
@@ -24,7 +21,7 @@ fn App() -> Element {
     let mut analysis = use_signal(|| None::<ifl_core::profile::InputProfile>);
 
     // Handlers
-    let submit_message = move |input_text: String| {
+    let mut submit_message = move |input_text: String, model_name: String| {
         if input_text.trim().is_empty() {
             return;
         }
@@ -49,6 +46,24 @@ fn App() -> Element {
                 match serde_json::from_str::<ifl_core::profile::InputProfile>(&json_res) {
                     Ok(profile) => {
                         analysis.set(Some(profile.clone()));
+                        messages.write().push((input_text.clone(), true));
+
+                        // LLM Call
+                        let profile_clone = profile.clone();
+                        let prompt_text = input_text.clone();
+                        let model = model_name.clone();
+                        spawn(async move {
+                            let llm_client = LlmClient::new(None, Some(model));
+                            match llm_client
+                                .generate_response(&prompt_text, &profile_clone)
+                                .await
+                            {
+                                Ok(response) => messages.write().push((response, false)),
+                                Err(e) => {
+                                    messages.write().push((format!("LLM Error: {}", e), false))
+                                }
+                            }
+                        });
                     }
                     Err(e) => {
                         println!("Error parsing profile JSON: {}", e);
@@ -147,16 +162,20 @@ fn App() -> Element {
         }
     };
 
+    let mut model_name = use_signal(|| "llama3.1".to_string());
+
     rsx! {
         div { class: "flex h-screen bg-gray-900 text-white font-sans",
             // Tailwind
             script { src: "https://cdn.tailwindcss.com" }
 
-            Sidebar { analysis: analysis }
+            Sidebar { analysis: analysis, model_name: model_name }
             ChatArea {
                 messages: messages,
                 text: text,
-                on_submit: submit_message,
+                on_submit: move |input_text| {
+                    submit_message(input_text, model_name.read().clone())
+                },
                 on_input: handle_input
             }
         }
@@ -164,10 +183,13 @@ fn App() -> Element {
 }
 
 #[component]
-fn Sidebar(analysis: Signal<Option<ifl_core::profile::InputProfile>>) -> Element {
+fn Sidebar(
+    analysis: Signal<Option<ifl_core::profile::InputProfile>>,
+    model_name: Signal<String>,
+) -> Element {
     let system_prompt = use_memo(move || {
         if let Some(profile) = analysis.read().as_ref() {
-            let client = LlmClient::new(None, None);
+            let client = LlmClient::new(None, Some(model_name.read().clone()));
             client.build_system_prompt(profile)
         } else {
             "Waiting for input...".to_string()
@@ -180,6 +202,16 @@ fn Sidebar(analysis: Signal<Option<ifl_core::profile::InputProfile>>) -> Element
             div { class: "flex items-center gap-2 mb-2",
                 div { class: "w-3 h-3 bg-blue-500 rounded-full animate-pulse" }
                 h2 { class: "text-xl font-bold text-blue-400 tracking-widest", "IFL CORE" }
+            }
+
+            // Model Selector
+            div { class: "flex flex-col gap-1",
+                label { class: "text-xs text-gray-500 uppercase", "Ollama Model" }
+                input {
+                    class: "bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 focus:border-blue-500 outline-none",
+                    value: "{model_name}",
+                    oninput: move |evt| model_name.set(evt.value())
+                }
             }
 
             if let Some(profile) = analysis.read().as_ref() {
