@@ -55,6 +55,7 @@ impl LlmClient {
     pub fn build_system_prompt(&self, profile: &InputProfile) -> String {
         let mut prompt =
             String::from("You are an intelligent assistant analyzing user input behavior.\n");
+        prompt.push_str("IMPORTANT: YOU MUST ALWAYS RESPOND IN JAPANESE.\n");
         prompt.push_str(
             "Based on the following analysis of the user's input, adjust your response:\n\n",
         );
