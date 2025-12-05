@@ -1,6 +1,6 @@
 use crate::profile::{
     AnswerMode, AnswerTags, DepthHint, EditingFeatures, ScopeHint, SourceFeatures, SourceType,
-    StructureFeatures, TimingFeatures, ToneHint,
+    StructureFeatures, TimingFeatures, ToneHint, UserState,
 };
 use std::collections::HashSet;
 
@@ -109,11 +109,47 @@ impl RuleEngine {
         // Sort for deterministic output (optional but good for testing)
         // answer_mode.sort(); // Need Ord derived or manual sort, skipping for now as enum doesn't derive Ord by default
 
+        // User State Detection
+        let mut user_states = HashSet::new();
+
+        // Hesitant: Low speed + many pauses
+        if timing.avg_chars_per_sec < 2.0 && timing.long_pause_count > 2 {
+            user_states.insert(UserState::Hesitant);
+        }
+
+        // Flowing: High speed + few pauses
+        if timing.avg_chars_per_sec > 5.0 && timing.long_pause_count == 0 {
+            user_states.insert(UserState::Flowing);
+        }
+
+        // Editing: High backspace count
+        if editing.backspace_count > 10 || editing.selection_edit_count > 2 {
+            user_states.insert(UserState::Editing);
+        }
+
+        // Pasting: High paste ratio
+        if source.paste_ratio > 0.5 {
+            user_states.insert(UserState::Pasting);
+        }
+
+        // Scattered: Many bursts + short segments (heuristic)
+        if timing.typing_bursts > 5 && timing.avg_chars_per_sec < 3.0 {
+            user_states.insert(UserState::Scattered);
+        }
+
+        // Focused: High speed + few edits
+        if timing.avg_chars_per_sec > 4.0 && editing.backspace_count < 5 {
+            user_states.insert(UserState::Focused);
+        }
+
+        let user_state: Vec<UserState> = user_states.into_iter().collect();
+
         AnswerTags {
             answer_mode,
             scope_hint: scope,
             tone_hint: tone,
             depth_hint: depth,
+            user_state,
             confidence: confidence.min(1.0),
         }
     }

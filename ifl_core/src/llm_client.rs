@@ -1,4 +1,4 @@
-use crate::profile::{AnswerMode, AnswerTags, ToneHint};
+use crate::profile::{AnswerMode, AnswerTags, ToneHint, UserState};
 use reqwest::Client;
 use serde_json::json;
 use std::error::Error;
@@ -53,27 +53,31 @@ impl LlmClient {
     }
 
     pub fn build_system_prompt(&self, analysis: &AnswerTags) -> String {
-        let mut prompt = String::from("You are a helpful AI assistant.");
+        let mut prompt =
+            String::from("You are an intelligent assistant analyzing user input behavior.\n");
+        prompt.push_str(
+            "Based on the following analysis of the user's input, adjust your response:\n\n",
+        );
 
-        // Add tone instruction
-        match analysis.tone_hint {
-            ToneHint::Direct => prompt.push_str(" Be direct and concise."),
-            ToneHint::Gentle => prompt.push_str(" Be polite and gentle."),
-            ToneHint::Neutral => {}
-        }
+        prompt.push_str(&format!("- Tone: {:?}\n", analysis.tone_hint));
+        prompt.push_str(&format!("- Depth: {:?}\n", analysis.depth_hint));
+        prompt.push_str(&format!("- Scope: {:?}\n", analysis.scope_hint));
+        prompt.push_str(&format!("- Modes: {:?}\n", analysis.answer_mode));
+        prompt.push_str(&format!("- User State: {:?}\n", analysis.user_state));
+        prompt.push_str(&format!("- Confidence: {:.2}\n\n", analysis.confidence));
+
+        prompt.push_str("Guidelines:\n");
 
         // Add mode instructions
         if !analysis.answer_mode.is_empty() {
-            prompt.push_str("\n\nFollow these guidelines based on the user's input pattern:");
             for mode in &analysis.answer_mode {
                 match mode {
-                    AnswerMode::Summarize => prompt.push_str("\n- Summarize the input text."),
-                    AnswerMode::Structure => prompt.push_str("\n- Structure the content with bullet points or headers."),
-                    AnswerMode::Refine => prompt.push_str("\n- Refine and polish the text for better clarity."),
-                    AnswerMode::ClarifyQuestion => prompt.push_str("\n- The user seems to be asking a question or needs clarification. Answer it clearly."),
-                    AnswerMode::Explore => prompt.push_str("\n- Explore the topic further and provide related information."),
-                    AnswerMode::Complete => prompt.push_str("\n- Complete the user's sentence or code."),
-                    _ => {},
+                    AnswerMode::Summarize => prompt.push_str("- Summarize the input text.\n"),
+                    AnswerMode::Structure => prompt.push_str("- Structure the content with bullet points or headers.\n"),
+                    AnswerMode::Refine => prompt.push_str("- Refine and polish the text for better clarity.\n"),
+                    AnswerMode::ClarifyQuestion => prompt.push_str("- The user seems to be asking a question or needs clarification. Answer it clearly.\n"),
+                    AnswerMode::Explore => prompt.push_str("- Explore the topic further and provide related information.\n"),
+                    AnswerMode::Complete => prompt.push_str("- Complete the user's sentence or code.\n"),
                 }
             }
         }

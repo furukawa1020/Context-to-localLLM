@@ -77,7 +77,19 @@ pub struct AnswerTags {
     pub tone_hint: ToneHint,
 
     pub depth_hint: DepthHint,
+    pub user_state: Vec<UserState>,
     pub confidence: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum UserState {
+    Hesitant,
+    Flowing,
+    Editing,
+    Pasting,
+    Scattered,
+    Focused,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
