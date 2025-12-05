@@ -48,7 +48,7 @@ impl IflCore {
             .map_err(|_| "Mutex poisoned".to_string())?;
         if let Some(extractor) = sessions.remove(message_id) {
             // 1. Extract features
-            let source = extractor.extract_source_features(0);
+            let source = extractor.extract_source_features(0u64);
             let timing = extractor.extract_timing_features();
             let structure = StructureAnalyzer::analyze(final_text);
             let editing = extractor.extract_editing_features(structure.char_count);
@@ -77,7 +77,7 @@ impl IflCore {
             .map_err(|_| "Mutex poisoned".to_string())?;
         if let Some(extractor) = sessions.get(message_id) {
             // 1. Extract features (non-destructive)
-            let source = extractor.extract_source_features(0);
+            let source = extractor.extract_source_features(0u64);
             let timing = extractor.extract_timing_features();
             let structure = StructureAnalyzer::analyze(current_text);
             let editing = extractor.extract_editing_features(structure.char_count);
