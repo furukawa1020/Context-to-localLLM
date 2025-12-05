@@ -48,7 +48,7 @@ fn App() -> Element {
             Ok(json_res) => {
                 match serde_json::from_str::<ifl_core::profile::InputProfile>(&json_res) {
                     Ok(profile) => {
-                        analysis.set(Some(profile.tags.clone()));
+                        analysis.set(Some(profile.clone()));
                         messages.write().push((input_text.clone(), true));
 
                         // LLM Call
