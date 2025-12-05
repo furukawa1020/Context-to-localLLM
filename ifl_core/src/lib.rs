@@ -6,5 +6,6 @@ pub mod profile;
 pub mod rules;
 
 pub use api::IflCore;
+pub use event::DeleteKind;
 pub use event::InputEvent;
 pub use profile::InputProfile;

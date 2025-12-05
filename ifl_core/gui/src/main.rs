@@ -1,9 +1,10 @@
 #![allow(non_snake_case)]
+use chrono::Utc;
 use dioxus::prelude::*;
 use ifl_core::llm_client::LlmClient;
 use ifl_core::{
     profile::{AnswerTags, ToneHint},
-    IflCore, InputEvent,
+    DeleteKind, IflCore, InputEvent,
 };
 
 fn main() {
@@ -188,6 +189,8 @@ fn Sidebar(analysis: Signal<Option<AnswerTags>>) -> Element {
         }
     }
 }
+
+#[component]
 fn AnalysisDetails(tags: AnswerTags) -> Element {
     rsx! {
         div { class: "flex flex-col gap-4",
