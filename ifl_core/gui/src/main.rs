@@ -99,6 +99,95 @@ fn App() -> Element {
         let id = session_id.read();
 
         if new_len > current_len {
+            // Insert
+            let diff = new_len - current_len;
+            if diff > 1 {
+                // Paste detected (heuristic)
+                println!("Paste detected: length={}", diff);
+                if let Err(e) = core_ref.push_event(&id, InputEvent::Paste { length: diff, ts }) {
+                    println!("Input Error (ignored): {}", e);
+                }
+            } else {
+                // Single char insert
+                if let Some(ch) = val.chars().last() {
+                    println!("Key Insert: '{}'", ch);
+                    if let Err(e) = core_ref.push_event(&id, InputEvent::KeyInsert { ch, ts }) {
+                        println!("Input Error (ignored): {}", e);
+                    }
+                }
+            }
+        } else if new_len < current_len {
+            // Delete
+            let diff = current_len - new_len;
+            println!("Key Delete: count={}", diff);
+            if let Err(e) = core_ref.push_event(
+                &id,
+                InputEvent::KeyDelete {
+                    kind: DeleteKind::Backspace,
+                    count: diff,
+                    ts,
+                },
+            ) {
+                println!("Input Error (ignored): {}", e);
+            }
+        }
+
+        text.set(val.clone());
+
+        // Real-time Analysis Preview
+        if let Ok(json_res) = core_ref.preview_message(&id, &val) {
+            if let Ok(profile) = serde_json::from_str::<ifl_core::profile::InputProfile>(&json_res)
+            {
+                analysis.set(Some(profile.tags));
+            }
+        }
+    };
+
+    rsx! {
+        div { class: "flex h-screen bg-gray-900 text-white font-sans",
+            // Tailwind
+            script { src: "https://cdn.tailwindcss.com" }
+
+            Sidebar { analysis: analysis }
+            ChatArea {
+                messages: messages,
+                text: text,
+                on_submit: submit_message,
+                on_input: handle_input
+            }
+        }
+    }
+}
+
+#[component]
+fn Sidebar(analysis: Signal<Option<AnswerTags>>) -> Element {
+    let system_prompt = use_memo(move || {
+        if let Some(tags) = analysis.read().as_ref() {
+            let client = LlmClient::new(None, None);
+            client.build_system_prompt(tags)
+        } else {
+            "Waiting for input...".to_string()
+        }
+    });
+
+    rsx! {
+        div { class: "w-1/3 p-4 bg-gray-800 border-r border-gray-700 flex flex-col gap-4 overflow-y-auto",
+            h2 { class: "text-xl font-bold mb-4 text-blue-400", "IFL Real-time Analysis" }
+            if let Some(tags) = analysis.read().as_ref() {
+                AnalysisDetails { tags: tags.clone() }
+
+                div { class: "p-4 bg-gray-700 rounded-lg mt-4",
+                    h3 { class: "text-sm text-gray-400 uppercase mb-2", "System Prompt Preview" }
+                    div { class: "text-xs font-mono bg-gray-900 p-2 rounded text-green-400 whitespace-pre-wrap",
+                        "{system_prompt}"
+                    }
+                }
+            } else {
+                div { class: "text-gray-500 italic", "Start typing to see analysis..." }
+            }
+        }
+    }
+}
 fn AnalysisDetails(tags: AnswerTags) -> Element {
     rsx! {
         div { class: "flex flex-col gap-4",
