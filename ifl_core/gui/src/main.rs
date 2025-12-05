@@ -125,7 +125,7 @@ fn App() -> Element {
                 &id,
                 InputEvent::KeyDelete {
                     kind: DeleteKind::Backspace,
-                    count: diff,
+                    count: diff as u32,
                     ts,
                 },
             ) {
