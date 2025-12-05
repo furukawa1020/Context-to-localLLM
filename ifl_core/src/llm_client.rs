@@ -52,7 +52,7 @@ impl LlmClient {
         Ok(content)
     }
 
-    fn build_system_prompt(&self, analysis: &AnswerTags) -> String {
+    pub fn build_system_prompt(&self, analysis: &AnswerTags) -> String {
         let mut prompt = String::from("You are a helpful AI assistant.");
 
         // Add tone instruction
