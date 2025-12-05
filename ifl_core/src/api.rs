@@ -55,6 +55,9 @@ impl IflCore {
 
             let tags = RuleEngine::apply(&source, &timing, &editing, &structure);
 
+            // Extract Ghost Text
+            let ghost_text = extractor.extract_ghost_text();
+
             let profile = InputProfile {
                 message_id: message_id.to_string(),
                 source,
@@ -62,6 +65,7 @@ impl IflCore {
                 editing,
                 structure,
                 tags,
+                ghost_text,
             };
 
             serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())
@@ -84,6 +88,9 @@ impl IflCore {
 
             let tags = RuleEngine::apply(&source, &timing, &editing, &structure);
 
+            // Extract Ghost Text
+            let ghost_text = extractor.extract_ghost_text();
+
             let profile = InputProfile {
                 message_id: message_id.to_string(),
                 source,
@@ -91,6 +98,7 @@ impl IflCore {
                 editing,
                 structure,
                 tags,
+                ghost_text,
             };
 
             serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())

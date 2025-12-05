@@ -75,6 +75,7 @@ impl FeatureExtractor {
             InputEvent::Submit { ts } => *ts,
             InputEvent::Undo { ts } => *ts,
             InputEvent::Redo { ts } => *ts,
+            InputEvent::GhostText { ts, .. } => *ts,
         };
 
         if self.start_time.is_none() {
@@ -230,6 +231,19 @@ impl FeatureExtractor {
             selection_edit_count: self.selection_edit_count,
             efficiency_score,
         }
+    }
+
+    pub fn extract_ghost_text(&self) -> Vec<String> {
+        self.events
+            .iter()
+            .filter_map(|e| {
+                if let InputEvent::GhostText { text, .. } = e {
+                    Some(text.clone())
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
 

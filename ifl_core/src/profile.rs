@@ -8,6 +8,7 @@ pub struct InputProfile {
     pub editing: EditingFeatures,
     pub structure: StructureFeatures,
     pub tags: AnswerTags,
+    pub ghost_text: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

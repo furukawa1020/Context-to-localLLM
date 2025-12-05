@@ -49,20 +49,6 @@ fn App() -> Element {
                 match serde_json::from_str::<ifl_core::profile::InputProfile>(&json_res) {
                     Ok(profile) => {
                         analysis.set(Some(profile.clone()));
-                        messages.write().push((input_text.clone(), true));
-
-                        // LLM Call
-                        let tags = profile.tags.clone();
-                        let prompt_text = input_text.clone();
-                        spawn(async move {
-                            let llm_client = LlmClient::new(None, None);
-                            match llm_client.generate_response(&prompt_text, &tags).await {
-                                Ok(response) => messages.write().push((response, false)),
-                                Err(e) => {
-                                    messages.write().push((format!("LLM Error: {}", e), false))
-                                }
-                            }
-                        });
                     }
                     Err(e) => {
                         println!("Error parsing profile JSON: {}", e);
@@ -120,7 +106,24 @@ fn App() -> Element {
         } else if new_len < current_len {
             // Delete
             let diff = current_len - new_len;
-            println!("Key Delete: count={}", diff);
+            let deleted_text = text.read()[new_len..].to_string();
+
+            println!("Key Delete: count={}, text='{}'", diff, deleted_text);
+
+            // Send GhostText event
+            if diff > 2 {
+                // Only capture significant deletions
+                if let Err(e) = core_ref.push_event(
+                    &id,
+                    InputEvent::GhostText {
+                        text: deleted_text,
+                        ts,
+                    },
+                ) {
+                    println!("Input Error (ignored): {}", e);
+                }
+            }
+
             if let Err(e) = core_ref.push_event(
                 &id,
                 InputEvent::KeyDelete {
@@ -165,7 +168,7 @@ fn Sidebar(analysis: Signal<Option<ifl_core::profile::InputProfile>>) -> Element
     let system_prompt = use_memo(move || {
         if let Some(profile) = analysis.read().as_ref() {
             let client = LlmClient::new(None, None);
-            client.build_system_prompt(&profile.tags)
+            client.build_system_prompt(profile)
         } else {
             "Waiting for input...".to_string()
         }

@@ -1,4 +1,4 @@
-use crate::profile::{AnswerMode, AnswerTags, ToneHint, UserState};
+use crate::profile::{AnswerMode, InputProfile};
 use reqwest::Client;
 use serde_json::json;
 use std::error::Error;
@@ -22,9 +22,9 @@ impl LlmClient {
     pub async fn generate_response(
         &self,
         text: &str,
-        analysis: &AnswerTags,
+        profile: &InputProfile,
     ) -> Result<String, Box<dyn Error>> {
-        let system_prompt = self.build_system_prompt(analysis);
+        let system_prompt = self.build_system_prompt(profile);
 
         let body = json!({
             "model": self.model,
@@ -52,19 +52,31 @@ impl LlmClient {
         Ok(content)
     }
 
-    pub fn build_system_prompt(&self, analysis: &AnswerTags) -> String {
+    pub fn build_system_prompt(&self, profile: &InputProfile) -> String {
         let mut prompt =
             String::from("You are an intelligent assistant analyzing user input behavior.\n");
         prompt.push_str(
             "Based on the following analysis of the user's input, adjust your response:\n\n",
         );
 
-        prompt.push_str(&format!("- Tone: {:?}\n", analysis.tone_hint));
-        prompt.push_str(&format!("- Depth: {:?}\n", analysis.depth_hint));
-        prompt.push_str(&format!("- Scope: {:?}\n", analysis.scope_hint));
-        prompt.push_str(&format!("- Modes: {:?}\n", analysis.answer_mode));
-        prompt.push_str(&format!("- User State: {:?}\n", analysis.user_state));
-        prompt.push_str(&format!("- Confidence: {:.2}\n\n", analysis.confidence));
+        prompt.push_str(&format!("- Tone: {:?}\n", profile.tags.tone_hint));
+        prompt.push_str(&format!("- Depth: {:?}\n", profile.tags.depth_hint));
+        prompt.push_str(&format!("- Scope: {:?}\n", profile.tags.scope_hint));
+        prompt.push_str(&format!("- Modes: {:?}\n", profile.tags.answer_mode));
+        prompt.push_str(&format!("- User State: {:?}\n", profile.tags.user_state));
+        prompt.push_str(&format!(
+            "- Pragmatic Intent: {:?}\n",
+            profile.tags.pragmatic_intent
+        ));
+        prompt.push_str(&format!("- Confidence: {:.2}\n\n", profile.tags.confidence));
+
+        if !profile.ghost_text.is_empty() {
+            prompt.push_str("GHOST TEXT (Deleted Thoughts):\n");
+            for (i, text) in profile.ghost_text.iter().enumerate() {
+                prompt.push_str(&format!("  {}. \"{}\"\n", i + 1, text));
+            }
+            prompt.push_str("\n");
+        }
 
         prompt.push_str("Guidelines:\n");
         prompt.push_str("CRITICAL: You MUST adapt your persona based on the 'User State' above.\n");
@@ -79,9 +91,9 @@ impl LlmClient {
         );
 
         // Add mode instructions
-        if !analysis.answer_mode.is_empty() {
+        if !profile.tags.answer_mode.is_empty() {
             prompt.push_str("\nSpecific Goals:\n");
-            for mode in &analysis.answer_mode {
+            for mode in &profile.tags.answer_mode {
                 match mode {
                     AnswerMode::Summarize => prompt.push_str("- Summarize the input text.\n"),
                     AnswerMode::Structure => prompt.push_str("- Structure the content with bullet points or headers.\n"),

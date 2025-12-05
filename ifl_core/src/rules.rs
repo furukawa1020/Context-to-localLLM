@@ -14,9 +14,9 @@ impl RuleEngine {
         structure: &StructureFeatures,
     ) -> AnswerTags {
         let mut modes = HashSet::new();
-        let mut scope = ScopeHint::Medium; // Default
+        let mut scope = ScopeHint::Narrow; // Default (was Specific)
         let mut tone = ToneHint::Neutral; // Default
-        let mut depth = DepthHint::Normal; // Default
+        let mut depth = DepthHint::Normal; // Default (was Standard)
         let mut confidence = 0.5f32; // Base confidence
 
         // Rule 1: High paste ratio + multiple lines -> Summarize/Structure
@@ -34,7 +34,7 @@ impl RuleEngine {
         {
             modes.insert(AnswerMode::Refine);
             modes.insert(AnswerMode::ClarifyQuestion);
-            depth = DepthHint::Deep;
+            depth = DepthHint::Deep; // Was Detailed
             confidence += 0.2;
         }
 
@@ -55,7 +55,7 @@ impl RuleEngine {
         // Rule 5: Bullet points -> Structure
         if structure.bullet_lines > 2 {
             modes.insert(AnswerMode::Structure);
-            scope = ScopeHint::Narrow;
+            scope = ScopeHint::Narrow; // Was Specific
             confidence += 0.1;
         }
 
@@ -67,7 +67,7 @@ impl RuleEngine {
 
         // Rule 7: Command like -> Direct tone
         if structure.command_like {
-            tone = ToneHint::Direct;
+            tone = ToneHint::Direct; // Was Casual (Direct fits command)
             confidence += 0.1;
         }
 
@@ -75,13 +75,13 @@ impl RuleEngine {
         if structure.japanese_detected {
             // Japanese text tends to be denser, so "Short" threshold might be lower
             if structure.char_count > 500 {
-                depth = DepthHint::Deep;
+                depth = DepthHint::Deep; // Was Detailed
             }
             // Japanese Tone Detection
             if structure.is_polite {
-                tone = ToneHint::Gentle;
+                tone = ToneHint::Gentle; // Was Formal
             } else if structure.is_direct {
-                tone = ToneHint::Direct;
+                tone = ToneHint::Direct; // Was Casual
             }
             confidence += 0.1;
         }
@@ -95,7 +95,7 @@ impl RuleEngine {
         if structure.request_implementation {
             modes.insert(AnswerMode::Complete);
             modes.insert(AnswerMode::Structure);
-            tone = ToneHint::Direct;
+            tone = ToneHint::Direct; // Was Casual
             confidence += 0.3; // Explicit request is strong
         }
 
@@ -104,10 +104,7 @@ impl RuleEngine {
             modes.insert(AnswerMode::Explore);
         }
 
-        // Convert HashSet to Vec
-        let mut answer_mode: Vec<AnswerMode> = modes.into_iter().collect();
-        // Sort for deterministic output (optional but good for testing)
-        // answer_mode.sort(); // Need Ord derived or manual sort, skipping for now as enum doesn't derive Ord by default
+        let answer_mode: Vec<AnswerMode> = modes.clone().into_iter().collect();
 
         // User State Detection
         let mut user_states = HashSet::new();
@@ -142,7 +139,7 @@ impl RuleEngine {
             user_states.insert(UserState::Focused);
         }
 
-        let user_state: Vec<UserState> = user_states.into_iter().collect();
+        let user_state: Vec<UserState> = user_states.clone().into_iter().collect();
 
         // Pragmatic Intent Detection
         let mut pragmatic_intents = HashSet::new();
