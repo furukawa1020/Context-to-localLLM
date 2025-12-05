@@ -84,19 +84,55 @@ fn App() -> Element {
         if let Ok(new_id) = core.read().start_message() {
             session_id.set(new_id);
         } else {
-            println!("Failed to start new session: Mutex poisoned");
+            messages.write().push((
+                "System Error: Failed to start new session".to_string(),
+                false,
+            ));
         }
     };
 
     let handle_input = move |val: String| {
-        text.set(val.clone());
-        if let Some(ch) = val.chars().last() {
-            let core_ref = core.read();
-            let id = session_id.read();
-            if let Err(e) = core_ref.push_event(&id, InputEvent::KeyInsert { ch, ts: 0 }) {
+        let current_len = text.read().len();
+        let new_len = val.len();
+        let ts = Utc::now().timestamp_millis() as u64;
+        let core_ref = core.read();
+        let id = session_id.read();
+
+        if new_len > current_len {
+            // Insert
+            let diff = new_len - current_len;
+            if diff > 1 {
+                // Paste detected (heuristic)
+                println!("Paste detected: length={}", diff);
+                if let Err(e) = core_ref.push_event(&id, InputEvent::Paste { length: diff, ts }) {
+                    println!("Input Error (ignored): {}", e);
+                }
+            } else {
+                // Single char insert
+                if let Some(ch) = val.chars().last() {
+                    println!("Key Insert: '{}'", ch);
+                    if let Err(e) = core_ref.push_event(&id, InputEvent::KeyInsert { ch, ts }) {
+                        println!("Input Error (ignored): {}", e);
+                    }
+                }
+            }
+        } else if new_len < current_len {
+            // Delete
+            let diff = current_len - new_len;
+            println!("Key Delete: count={}", diff);
+            if let Err(e) = core_ref.push_event(
+                &id,
+                InputEvent::KeyDelete {
+                    kind: DeleteKind::Backspace,
+                    count: diff,
+                    ts,
+                },
+            ) {
                 println!("Input Error (ignored): {}", e);
             }
         }
+
+        text.set(val);
     };
 
     rsx! {
