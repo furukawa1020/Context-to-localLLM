@@ -1,6 +1,6 @@
 use crate::profile::{
-    AnswerMode, AnswerTags, DepthHint, EditingFeatures, ScopeHint, SourceFeatures, SourceType,
-    StructureFeatures, TimingFeatures, ToneHint, UserState,
+    AnswerMode, AnswerTags, DepthHint, EditingFeatures, PragmaticIntent, ScopeHint, SourceFeatures,
+    SourceType, StructureFeatures, TimingFeatures, ToneHint, UserState,
 };
 use std::collections::HashSet;
 
@@ -144,12 +144,43 @@ impl RuleEngine {
 
         let user_state: Vec<UserState> = user_states.into_iter().collect();
 
+        // Pragmatic Intent Detection
+        let mut pragmatic_intents = HashSet::new();
+
+        // Solution Focused: Flowing (Fast) + Mixed/Paste (Context provided)
+        if user_states.contains(&UserState::Flowing) || user_states.contains(&UserState::Pasting) {
+            pragmatic_intents.insert(PragmaticIntent::SolutionFocused);
+        }
+
+        // Debugging: Editing + Pasting (Fixing code)
+        if user_states.contains(&UserState::Editing) && user_states.contains(&UserState::Pasting) {
+            pragmatic_intents.insert(PragmaticIntent::Debugging);
+        }
+
+        // Expertise Seeking: Focused (Fast & Precise) + Long duration (Deep thought)
+        if user_states.contains(&UserState::Focused) && timing.total_duration_ms > 10_000 {
+            pragmatic_intents.insert(PragmaticIntent::ExpertiseSeeking);
+        }
+
+        // Ambiguity Resolution: Hesitant (Unsure) + Editing (Rewriting)
+        if user_states.contains(&UserState::Hesitant) && user_states.contains(&UserState::Editing) {
+            pragmatic_intents.insert(PragmaticIntent::AmbiguityResolution);
+        }
+
+        // Concept Exploration: Scattered (Brainstorming) + Explore Mode
+        if user_states.contains(&UserState::Scattered) || modes.contains(&AnswerMode::Explore) {
+            pragmatic_intents.insert(PragmaticIntent::ConceptExploration);
+        }
+
+        let pragmatic_intent: Vec<PragmaticIntent> = pragmatic_intents.into_iter().collect();
+
         AnswerTags {
             answer_mode,
             scope_hint: scope,
             tone_hint: tone,
             depth_hint: depth,
             user_state,
+            pragmatic_intent,
             confidence: confidence.min(1.0),
         }
     }

@@ -78,7 +78,18 @@ pub struct AnswerTags {
 
     pub depth_hint: DepthHint,
     pub user_state: Vec<UserState>,
+    pub pragmatic_intent: Vec<PragmaticIntent>,
     pub confidence: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum PragmaticIntent {
+    SolutionFocused,     // Just the code
+    ConceptExploration,  // Explain the why
+    Debugging,           // Fix this
+    ExpertiseSeeking,    // Deep dive
+    AmbiguityResolution, // Clarify options
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
